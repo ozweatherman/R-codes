@@ -1,6 +1,6 @@
 ---
 title: "Weather Downtime Study for Offshore Myanmar"
-author: "Fugro GEOS Pte Ltd"
+author: "Michael Wang"
 date: "12 January 2017"
 output: html_document
 ---
@@ -13,7 +13,7 @@ library(RColorBrewer)
 
 ```
 ## 1. INTRODUCTION
-This report has been preapred by Fugro Singapore Pte Ltd to assess the weather downtime for offshore Myanmar. The locations of interested are:
+This report has been preapred 
 
 - **15.667N, 96.417E**
 - **13.809N, 96.327E**
