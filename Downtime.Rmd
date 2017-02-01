@@ -1,0 +1,77 @@
+---
+title: "Weather Downtime Study for Offshore Myanmar"
+author: "Fugro GEOS Pte Ltd"
+date: "12 January 2017"
+output: html_document
+---
+```{r echo=FALSE, message=FALSE}
+#load library
+library(ggplot2)
+library(reshape)
+library(dplyr)
+library(RColorBrewer)
+
+```
+## 1. INTRODUCTION
+This report has been preapred by Fugro Singapore Pte Ltd to assess the weather downtime for offshore Myanmar. The locations of interested are:
+
+- **15.667N, 96.417E**
+- **13.809N, 96.327E**
+
+The hindcast dataset to be used is called "Integrated Ocean Waves for Geophysical and other Applications" (IOWAGA). It is a WaveWatch III global hindcast model with data available from January 1990 to present at 3-hourly intervals. The model resolution is 0.5° and is forced by the National Centers for Environmental Prediction (NCEP) Climate Forecast System Reanalysis (CFSR) atmospheric data initially, but switched to European Centre for Medium-range Weather Forecasts (ECMWF) from 2013. The hindcast data for the month of January has been extracted from IOWAGA from 2007 to 2016 for the following grid points:
+
+- **15.500N, 96.500E**
+- **14.000N, 96.500E**
+
+## 2. ANALYSIS RESULTS
+
+For operation limit of max signficant wave height higher than 3 meters ($Hmax > 3m$), signficant wave height should be higher than 1.8m ($Hs > 1.8m$ showing as a  <span style="color:red">red</span> line in Figures 1 to 4.  It can be seen from the hindcast data (for the two grid points) for the past 10 years, $Hs$ never exceeded 1.8m in January. 
+
+Tables 1 and 2 show the average downtime days in Janauary for the past 10 years with $Hs > 1.0m$. No downtime was expected if the year was not in the table. 
+
+### 2.1 Point 15.500N, 96.500E
+
+```{r echo=FALSE}
+#read data
+grid<-read.csv('f:/personal/grid1.csv',head=TRUE)
+names(grid)=c(2007:2016,'time','day')
+df<-melt(grid,id.vars=c('day','time'),variable_name='year')
+downtime<-df%>%
+  group_by(year)%>%
+  select(year,value)%>%
+  filter(value>=1.0)%>%
+  summarise_each(funs(round(n()/248*31,digits=1),max))
+
+names(downtime)<-(c('Year','  Average Downtime Days','Max Hs[m]'))
+knitr::kable(downtime,caption="Table 1. Average Downtime Days (Hs >1.0m)") 
+
+```
+
+```{r fig1,fig.width=11,fig.height=6,fig_caption=TRUE,echo=FALSE,fig.cap='Figure 1. Boxplot of Hs at 15.5N 96.5E by Year'}
+
+#boxplot by year
+ggplot(df,aes(x=year,y=value))+geom_boxplot()+coord_cartesian(ylim=c(0,2))+xlab('Year')+ylab('Hs [m]')+geom_hline(yintercept = 1.8,col='red')
+```
+
+```{r fig2,fig.width=11,fig.height=6,fig_caption=TRUE,echo=FALSE,fig.cap='Figure 2. Boxplot of Hs at 15.5N 96.5E by Hours of Day'}
+
+#boxplot by hours of day
+ggplot(df,aes(x=as.factor(time),y=value))+geom_boxplot()+coord_cartesian(ylim=c(0,2))+xlab('Time [UTC]')+ylab('Hs [m]')+geom_hline(yintercept = 1.8,col='red')
+```
+
+```{r fig3, fig.width=11,fig.height=6,fig_caption=TRUE,echo=FALSE,fig.cap='Figure 3. Heat Plot of Hs by Hours and Days'}
+#heat plot 
+plot.data<-df%>%
+  group_by(day,time)%>%
+  summarise(avg.hs=mean(value))
+
+plot.data$label<-plot.data$avg.hs%>%
+  format(digits=1)%>%as.character()
+
+ggplot(plot.data)+aes(x=day,y=time,fill=avg.hs,label=label)+geom_raster()+geom_text(col='WHITE',size=3)+coord_cartesian(ylim=c(0,21),xlim=c(1,31))+scale_fill_distiller(name='Average\nHs',type='seq',palette=1)+theme_bw()
+  
+```
+ 
+
+
+

@@ -1,0 +1,61 @@
+---
+title: "WindResourceAssessment(bReeze)"
+author: "Michael Wang"
+date: "18 January 2017"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(RColorBrewer)
+library(bReeze)
+library(XML)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+## Not run:
+# load example data
+data(winddata)
+# create two datasets
+set40 <- set(height=40, v.avg=winddata[,2], v.std=winddata[,5],
+             dir.avg=winddata[,14])
+set30 <- set(height=30, v.avg=winddata[,6], v.std=winddata[,9],
+             dir.avg=winddata[,16])
+# format time stamp
+ts <- timestamp(timestamp=winddata[,1])
+# create met mast object
+metmast <- mast(timestamp=ts, set40=set40, set30=set30)
+# plot time series of met mast signals
+plot(metmast)
+# calculate frequency and mean wind speed per wind direction sector
+freq <- frequency(mast=metmast, v.set=1)
+# plot frequency
+plot(freq)
+# calculate availability of pairs of wind speed and direction
+availability(mast=metmast)
+# calculate monthly means of wind speed
+month.stats(mast=metmast)
+# calculate turbulence intensity
+turbulence(mast=metmast, turb.set=1)
+# calculate weibull parameters
+wb <- weibull(mast=metmast, v.set=1)
+# calculate total wind energy content
+energy(wb=wb)
+# calculate wind profile
+pf <- profile(mast=metmast, v.set=c(1,2), dir.set=1)
+
+# import power curve
+pc <- pc("Enercon_E126_7.5MW.pow")
+# calculate annual energy production
+aep <- aep(profile=pf, pc=pc, hub.h=135)
+# plot AEP
+plot(aep)
+## End(Not run)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

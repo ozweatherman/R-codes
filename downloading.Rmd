@@ -1,0 +1,56 @@
+---
+title: "Downloading and Reading Files"
+author: "Michael Wang"
+date: "2017Äê1ÔÂ3ÈÕ"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## R Markdown
+This is R markdown for downloading files and reading files <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Output
+
+```{r echo = TRUE}
+library(RCurl)
+test<-getURI("http://chart.finance.yahoo.com/table.csv?s=YHOO&a=11&b=3&c=2016&d=0&e=3&f=2017&g=d&ignore=.csv")
+
+data<-read.csv(text=test) #or
+data<-read.table(text=test,sep=',',header=T)
+
+#Alternatively,
+test<-download.file("http://chart.finance.yahoo.com/table.csv?s=YHOO&a=11&b=3&c=2016&d=0&e=3&f=2017&g=d&ignore=.csv","test.csv")
+getwd()
+list.files('./')
+data<-read.csv("test.csv")
+
+#Alternatively, 'scan' can be used
+test<-scan("test.csv",sep=',',what=list(Date='',Open=0,High=0,Low=0,Close=0,Volume=0,Adj.Close=0),skip=1,fill=T)
+str(test) #it's a list
+test<-as.data.frame(test) #convert to data frame
+```
+
+## Slide with Plot
+
+```{r}
+library(ggplot2)
+ggplot(data,aes(x=Date,y=Open))+geom_point()+stat_smooth(method='lm')
+
+```
+## Slid 
+```{r}
+
+
+```
+

@@ -1,0 +1,93 @@
+---
+title: "GGPLOT2 Package"
+author: "Michael Wang"
+date: "4 January 2017"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(dplyr)
+library(ggplot2)
+data=download.file("https://github.com/ywchiu/rcookbook/raw/master/chapter7/superstore_sales.csv", 'superstorm_sales.csv')
+getwd()
+list.files('./')
+
+superstorm<-read.csv("superstorm_sales.csv",header=T)
+str(superstorm) 
+superstorm$Order.Date=as.Date(superstorm$Order.Date)
+str(superstorm)
+
+#summarise the sales amount by year, month and provice
+superstorm%>%
+  group_by(format(Order.Date,'%Y'))%>%
+  summarise(avg_sale=mean(Sales,na.rm=T))
+
+superstorm%>%
+  group_by(format(Order.Date,'%m'))%>%
+  summarise(average_sale=mean(Sales,na.rm=T))
+
+superstorm%>%
+  group_by(Province)%>%
+  summarise(average_sale=mean(Sales,na.rm=T))
+
+# the way done by the book
+sum_price_by_province <- superstorm %>% 
+  filter(Order.Date > '2012-01-01') %>% 
+  select(Sales, Province, Order.Date) %>% 
+  group_by(Year_Month = as.Date(strftime(Order.Date,"%Y/%m/01")), Province) %>% 
+  summarise(Total_Sales = sum(Sales))
+  head(sum_price_by_province)
+  str(sum_price_by_province)
+
+#subset the data for British Columbia and Alberta from 2012-07-01
+sample_sum<-sum_price_by_province %>%
+  filter(Year_Month>'2012-07-01',Province %in% c('British Columbia','Alberta'))
+  
+    
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+g<-ggplot(data=sample_sum,mapping=aes(x=Year_Month,y=Total_Sales,colour=Province))+ggtitle("Pure Canvas")
+g
+g+geom_point()+ggtitle('With Point Geometry')
+g+geom_line()+ggtitle('With Line Geometry')
+g+geom_line()+xlab('Year Month')+ylab('Sales Amount')+ggtitle('Sale Amount by Region')+stat_smooth()
+
+g+geom_line(color='red')+geom_point(size=5,colour='blue')
+
+#bar graph
+g+geom_bar(stat='identity', aes(fill=Province), position='fill')  
+g+geom_bar(stat='identity',aes(fill=Province),position='dodge')
+g+geom_bar(stat='identity',aes(fill=Province),position='stack')
+
+#boxplot
+g+geom_boxplot(aes(x=Province))+xlab('Province')+ggtitle('Boxplot')
+
+#histogram
+set.seed(123)
+norm.sample<-data.frame(val=rnorm(1000))
+ggplot(norm.sample,aes(x=val))+geom_density()
+ggplot(norm.sample,aes(x=val))+geom_histogram(binwidth = 0.1)
+
+
+#more summary
+sample_stat<-superstorm%>%
+  filter(Order.Date>'2012-01-01')%>%
+  select(Province,Sales)%>%
+  group_by(Province)%>%
+  summarise(total_sale=sum(Sales))
+#barplot
+ggplot(sample_stat,aes(x='',y=total_sale))+geom_bar(stat='identity',aes(fill=Province),position='fill')
+#polar plot or pie chart
+ggplot(sample_stat,aes(x='',y=total_sale,fill=Province))+geom_bar(stat='identity')+coord_polar("y",start=0)
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

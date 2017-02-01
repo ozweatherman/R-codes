@@ -1,0 +1,80 @@
+---
+title: "Family of APPLY functions"
+author: "Michael Wang"
+date: "2017Äê1ÔÂ27ÈÕ"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown file for using apply, lapply and sapply
+
+'apply' used for array/matrix and dataframe, with the form apply(x,margin,function,...), 
+the output varies depends on functions.
+
+```{r}
+#================================================================
+# summarise
+# for array and martix, dplyr is not possible, which only deals with dataframe like object
+#================================================================
+str(Titanic)
+Titanic
+apply(Titanic,1,sum) #subtotal in each category of the 'Class' dimension
+apply(Titanic,2,sum) #subtotal in each category of the 'Sex' dimennsion
+apply(Titanic,3,sum) #subtotal in each category of the 'age' dimension
+apply(Titanic,4,sum) #subtotal in each category of the 'suvival' dimension
+
+apply(Titanic,c(3,4),sum) #group by 3rd and 4th dimensions, 4-d squeezed to 2-d data
+apply(Titanic,c(1,2),sum) #group by 1st and 2nd dimensions, 4-d squeezed to 2-d data
+
+```
+
+lapply and sapply, with the form lapply/sapply(x,function,...)
+
+'lapply' deals with list, vector and dataframe, and outpout list; 
+'sapply' is exactly the same as 'lapply', excpt the output reducing to matrix, vector, or list
+
+```{r}
+str(iris)
+lapply(iris[,-5],mean)  # always columwise operation, excluding the factor coloumn
+sapply(iris[,-5],mean) # the result is a vector this time
+apply(iris[,-5],2,mean) # need to include dimension '2'
+lapply(iris[,-5],max) # max of each column, excluding the factor column
+sapply(iris[,-5],max) # the result is a vector this time.
+apply(iris[,-5],2,max) # need to include dimension '2' this time
+
+```
+
+tapply work with vector, columns of dataframe or list, summary data by group, equivalent to   group_by and summarise in dplyer, but dplyr can work on mutiple columns
+
+```{r}
+head(iris)
+test<-tapply(iris$Sepal.Length,iris$Species,mean) #using tapply
+class(test)
+
+library(dplyr)
+iris%>%
+  group_by(Species)%>%
+  summarise_each(funs(mean))  # done for all columns
+
+iris%>%
+  group_by(Species)%>%
+  summarise_each(funs(mean),Sepal.Length,Sepal.Width)  # done for two columns
+
+iris%>%
+  group_by(Species)%>%
+  summarise_each(funs(mean),Sepal.Length)  # done for ONE columns
+
+iris%>%
+  group_by(Species)%>%
+  summarise(average_Sepal.Length=mean(Sepal.Length,na.rm=T))  # use 'summarise this time
+
+```
+source: 
+  1. https://www.youtube.com/watch?v=jWjqLW-u3hc&t=1302s
+  2. https://www.youtube.com/watch?v=f0U74ZvLfQo&t=610s
+  3. https://www.youtube.com/watch?v=ejVWRKidi9M
+  4. https://www.youtube.com/watch?v=HmBPDTtb6Bg
+

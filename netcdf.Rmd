@@ -1,0 +1,157 @@
+---
+title: "ReadNetCDF"
+author: "Michael Wang"
+date: "9 January 2017"
+output: html_document
+---
+
+This is an R Markdown document showing how to read NetCDF file, reference   <http://geog.uoregon.edu/bartlein/courses/geog607/Rmd/netCDF_01.htm>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(ncdf4)
+library(chron)
+library(RColorBrewer)
+library(lattice)
+library(dplyr)
+library(ggplot2)
+library(reshape)
+
+workdir<-"T:\\Consultancy\\Datasets\\IOWAGA\\hs\\"
+setwd(workdir)
+
+dname<-'hs'
+target.lat<-14.0
+target.lon<-96.5
+target.mon<-1  
+hs.subset<-matrix(,nrow=248,ncol=10)
+k<-0
+for (i in c('200701','200801_EC','200901_EC','201001_EC','201101_EC','201201_EC','201301_EC',
+            '201401_EC','201501_EC','201601_EC'))
+{
+ncname<-i
+k<-k+1
+ncfname<-paste(ncname,'.nc',sep='')
+
+  
+#open a NetCDF file
+ncin<-nc_open(ncfname)
+print(ncin)
+
+# Get the longitude and Latitudes information
+lon<-ncvar_get(ncin,"longitude")
+nlon<-dim(lon)
+head(lon)
+
+lat<-ncvar_get(ncin,"latitude")
+nlat<-dim(lat)
+head(lat)
+
+print(c(nlon,nlat))
+
+# get time variable and attributes
+t<-ncvar_get(ncin,"time")
+tunits<-ncatt_get(ncin,"time","units")
+nt<-dim(t)
+
+
+# get the variable and attribute and verify the size of the array
+hs.array<-ncvar_get(ncin,dname)
+dlname<-ncatt_get(ncin,dname,"long_name")
+dunits<-ncatt_get(ncin,dname,"units")
+fillvalue<-ncatt_get(ncin,dname,"_FillValue")
+dim(hs.array)
+
+#get global atrributes
+title<-ncatt_get(ncin,0,'title')
+institution<-ncatt_get(ncin,0,'institution')
+datasource<-ncatt_get(ncin,0,'source')
+references<-ncatt_get(ncin,0,'references')
+history<-ncatt_get(ncin,0,'history')
+conventions<-ncatt_get(ncin,0,'Conventions')
+
+#close NetCDF file
+nc_close(ncin)
+
+#split the time units string into fields
+tustr<-strsplit(tunits$value," ")
+tdstr<-strsplit(unlist(tustr)[3],"-")
+tmonth=as.integer(unlist(tdstr)[2])
+tday = strsplit(unlist(tdstr)[3],'T')
+tday=as.integer(unlist(tday)[1])
+tyear = as.integer(unlist(tdstr)[1])
+t<-chron(t,origin=c(tmonth,tday,tyear))
+#replacing NetCDF fillvalues with R NA
+hs.array[hs.array==fillvalue$vlaue]<-NA
+length(na.omit(as.vector(hs.array[,,1])))
+
+
+#get subset
+idxlon<-lon==target.lon
+idxlat<-lat==target.lat
+idxmon<-tmonth==target.mon
+hs.subset[,k]<-hs.array[idxlon,idxlat,idxmon]
+}
+
+# change the matrix to dataframe
+colnames(hs.subset)<-2007:2016
+hs.df<-as.data.frame(hs.subset)
+hs.df$time<-rep(seq(0,21,by=3),times=31)
+hs.df$day<-rep(1:31,each=8)
+write.table(hs.df,"f:/personal/grid2.csv",row.names=FALSE,sep=',')
+
+
+# reshape the dataframe, and plot all data in a dataframe using ggplot2
+require(reshape)
+
+df <- melt(hs.df ,  id.vars = c('day','time'), variable_name = 'year')
+
+str# plot on same grid, each series colored differently -- 
+
+ggplot(df,aes(x=year,y=value))+geom_boxplot()+xlab('Year')+
+  ylab('Hs [m]')+geom_hline(yintercept = 1.8,col='red')+ggtitle(paste('Significant Wave Height in January',target.lat,'N',target.lon,'E',sep=' '))+coord_cartesian(ylim = c(0,2.0)) 
+
+geom_line()# or plot on different plots
+ggplot(df,aes(x=value))+geom_line()+facet_grid(variable ~ .)
+
+
+
+
+
+
+
+
+
+
+# get a slice of data
+m<-1
+hs.slice<-hs.array[,,m]
+image(lon,lat,hs.slice,col=rev(brewer.pal(10,"RdBu")))
+#better image
+grid <- expand.grid(lon = lon, lat = lat)
+cutpts <- c(0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)
+levelplot(hs.slice ~ lon * lat, data = grid, at = cutpts, cuts = 11, pretty = T, col.regions = (rev(brewer.pal(10, "RdBu"))))
+
+#create a data frame
+lonlat<-expand.grid(lon,lat)
+hs.vec<-as.vector(hs.slice)
+hs.df01<-data.frame(cbind(lonlat,hs.vec))
+names(hs.df01)<-c("lon","lat",paste0(dname,as.character(m),sep='_'))
+head(na.omit(hs.df01),20)
+
+#converting the whole array to dataframe
+hs.vec.long<-as.vector(hs.array)
+length(hs.vec.long)
+hs.mat<-matrix(hs.vec.long,nrow=nlon*nlat,ncol=nt)
+head(hs.mat)
+
+```
+
+Note that the parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+
+```
+
